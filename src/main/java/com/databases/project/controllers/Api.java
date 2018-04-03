@@ -8,11 +8,18 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import javax.servlet.http.HttpServletRequest;
 
 import com.databases.project.services.IAuthentication;
+import com.databases.project.models.*;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Collections;
 import java.util.Set;
+
+import io.jsonwebtoken.impl.crypto.MacProvider;
+import java.lang.Object;
+import java.util.Date ;
+import java.security.Key;
+import java.util.List;
 
 
 @CrossOrigin
@@ -32,6 +39,11 @@ public class Api {
       return Collections.singleton(authentication.getSecurityQuestion(username));
     }
 
+    @RequestMapping("/getCreditCards")
+    public List<CreditCard> getCreditCards() {
+      return authentication.getCreditTypes();
+    }
+
     @RequestMapping("/getJWT")
     public String test(@RequestParam(value = "i", required = false, defaultValue = "5") int i) {
 
@@ -44,13 +56,37 @@ public class Api {
     }
 
     @RequestMapping("/authenticate")
-    public Boolean authenticate(@RequestParam(value = "username", required = true) String username, 
+    public String authenticate(@RequestParam(value = "username", required = true) String username, 
                                @RequestParam(value = "password", required = true) String password,
                                @RequestParam(value = "email", required = true) String email,
-                               @RequestParam(value = "answer", required = true) String answer,
-                                HttpServletRequest request){
+                               @RequestParam(value = "answer", required = true) String answer){
 
-      return authentication.isValidLogin(username, email, password, answer);
+
+      if (authentication.isValidLogin(username, password, email.toLowerCase(), answer.toLowerCase())){
+        Key key = MacProvider.generateKey();
+
+        long nowMillis = System.currentTimeMillis();
+        long expMillis = nowMillis + 12000000;
+        Long warnMillis = expMillis - 300000;
+
+        Date exp = new Date(expMillis);
+        Date warn = new Date(warnMillis);
+
+        String compactJws = Jwts.builder()
+        .claim("username", username)
+        .claim("warning-time", warn)
+        .setExpiration(exp)
+        .signWith(SignatureAlgorithm.HS512, key)
+        .compact();
+
+
+        return compactJws;
+
+      }else{
+        System.out.println("ERROR! INCORRECT LOGIN ATTEMPT");
+        return "Invalid";
+      }
+
 
     }
 

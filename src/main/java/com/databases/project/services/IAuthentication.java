@@ -1,6 +1,7 @@
 package com.databases.project.services;
+import com.databases.project.models.CreditCard;
 
-import java.util.HashMap;
+import java.util.List;
 
 public interface IAuthentication{
 
@@ -8,5 +9,7 @@ public interface IAuthentication{
 
   public boolean userExists(String username);
 
-  public boolean isValidLogin(String username, String email, String password, String answer);
+  public boolean isValidLogin(String username, String password, String email, String answer);
+
+  public List<CreditCard> getCreditTypes();
 }
