@@ -1,5 +1,6 @@
 package com.databases.project.services;
 import com.databases.project.models.CreditCard;
+import com.databases.project.models.Customer;
 
 import java.util.List;
 
@@ -11,5 +12,7 @@ public interface IAuthentication{
 
   public boolean isValidLogin(String username, String password, String email, String answer);
 
-  public List<CreditCard> getCreditTypes();
+  public String generateToken(String username);
+
+  public boolean createUser(Customer customer);
 }

@@ -11,9 +11,16 @@ import org.springframework.jdbc.core.RowMapper;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Date;
+import java.security.Key;
+
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.impl.crypto.MacProvider;
 
 import com.databases.project.models.LoginForm;
 import com.databases.project.models.CreditCard;
+import com.databases.project.models.Customer;
 
 @Service
 public class Authentication implements IAuthentication {
@@ -49,16 +56,42 @@ public class Authentication implements IAuthentication {
     }
   }
 
-  public List<CreditCard> getCreditTypes(){
-    RowMapper<CreditCard> rowMapper = (rs, rowNum) -> {
-      return new CreditCard(rs.getInt("card_id"), rs.getString("card_name"), rs.getDouble("annual_fees"), 
-        rs.getDouble("intro_apr"), rs.getInt("months_of_intro_apr"), rs.getDouble("regular_apr_min"), 
-        rs.getDouble("regular_apr_max"), rs.getDouble("reward_rate_min"), rs.getDouble("reward_rate_max"), 
-        rs.getDouble("reward_bonus"), rs.getDouble("late_fee"), rs.getString("credit_history"));
-    };
+  public String generateToken(String username){
+    Key key = MacProvider.generateKey();
 
-    String sql = "SELECT * FROM credit_cards;";
-    List<CreditCard> list = jdbcTemplate.query(sql, rowMapper);
-    return list;
+    long nowMillis = System.currentTimeMillis();
+    long expMillis = nowMillis + 12000000;
+    Long warnMillis = expMillis - 300000;
+
+    Date exp = new Date(expMillis);
+    Date warn = new Date(warnMillis);
+
+    String compactJws = Jwts.builder()
+    .claim("username", username)
+    .claim("warning-time", warn)
+    .setExpiration(exp)
+    .signWith(SignatureAlgorithm.HS512, key)
+    .compact();
+
+
+    return compactJws;
+  }
+
+  public boolean createUser(Customer customer){
+    try{
+      jdbcTemplate.update(
+        "INSERT INTO customer (first_name, last_name, date_of_birth, street, city, state, country, " +
+          "email, phone, username, c_password, security_question, security_answer, " +
+          "annual_income, zipcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        customer.getFirstName(), customer.getLastName(), customer.getDateOfBirth(), customer.getStreetAddress(),
+        customer.getCity(), customer.getState(), customer.getCountry(), customer.getEmail(), 
+        customer.getPhone(), customer.getUsername(), customer.getPassword(), 
+        customer.getSecurityQuestion(), customer.getSecurityAnswer(), customer.getAnnualIncome(), customer.getZipcode()
+      );
+      return true;
+    }catch(Error e){
+      System.out.println(e);
+      return false;
+    }
   }
 }

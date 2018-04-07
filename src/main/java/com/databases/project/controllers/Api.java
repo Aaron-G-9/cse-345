@@ -1,25 +1,26 @@
 package com.databases.project.controllers;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.databases.project.services.IBankService;
 import com.databases.project.services.IAuthentication;
 import com.databases.project.models.*;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import java.util.Collections;
 import java.util.Set;
 
-import io.jsonwebtoken.impl.crypto.MacProvider;
 import java.lang.Object;
 import java.util.Date ;
-import java.security.Key;
 import java.util.List;
+import java.util.Map;
 
 
 @CrossOrigin
@@ -28,6 +29,7 @@ import java.util.List;
 public class Api {
 
     @Autowired IAuthentication authentication;
+    @Autowired IBankService bankservice;
 
     @RequestMapping("/getUserLogin")
     public Boolean getUserLogin(@RequestParam(value = "username", required = true) String username) {
@@ -41,18 +43,16 @@ public class Api {
 
     @RequestMapping("/getCreditCards")
     public List<CreditCard> getCreditCards() {
-      return authentication.getCreditTypes();
+      return bankservice.getCreditTypes();
     }
 
-    @RequestMapping("/getJWT")
-    public String test(@RequestParam(value = "i", required = false, defaultValue = "5") int i) {
-
-      String compactJws = Jwts.builder()
-        .setSubject("Joe")
-        .signWith(SignatureAlgorithm.HS512, "cse3450")
-        .compact();
-
-      return (compactJws);
+    @PostMapping("/createUser")
+    public String createUser(@ModelAttribute Customer customer){
+      String token = "";
+      if (authentication.createUser(customer)){
+        token = authentication.generateToken(customer.getUsername());
+      }
+      return token;
     }
 
     @RequestMapping("/authenticate")
@@ -63,25 +63,9 @@ public class Api {
 
 
       if (authentication.isValidLogin(username, password, email.toLowerCase(), answer.toLowerCase())){
-        Key key = MacProvider.generateKey();
-
-        long nowMillis = System.currentTimeMillis();
-        long expMillis = nowMillis + 12000000;
-        Long warnMillis = expMillis - 300000;
-
-        Date exp = new Date(expMillis);
-        Date warn = new Date(warnMillis);
-
-        String compactJws = Jwts.builder()
-        .claim("username", username)
-        .claim("warning-time", warn)
-        .setExpiration(exp)
-        .signWith(SignatureAlgorithm.HS512, key)
-        .compact();
-
-
-        return compactJws;
-
+        String yourToken =  authentication.generateToken(username);
+        System.out.println(yourToken);
+        return yourToken;
       }else{
         System.out.println("ERROR! INCORRECT LOGIN ATTEMPT");
         return "Invalid";
