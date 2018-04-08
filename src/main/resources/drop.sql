@@ -1,0 +1,10 @@
+drop table transactions;
+drop table has_credit_card;
+drop table has_account;
+drop table has_loan;
+drop table complaints;
+drop table accounts;
+drop table loans;
+drop table employee;
+drop table credit_cards;
+drop table customer;
