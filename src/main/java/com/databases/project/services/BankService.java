@@ -67,6 +67,9 @@ public class BankService implements IBankService {
   public Map<String, List<Transaction>> getUserOverview(String username){
     List<Account> accountList = getUserAccounts(username);
 
+    int customerId = jdbcTemplate.queryForObject(
+                        "select customer_id from customer where username = ?", new Object[] { username }, Integer.class);
+
     RowMapper<Transaction> transactionMapper = (rs, rowNum) -> {
       System.out.println(rs.getDouble("delta"));
       return new Transaction(rs.getInt("account_id"), rs.getDouble("creation_fee"), rs.getInt("credit_id"),
