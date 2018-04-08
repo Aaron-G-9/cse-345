@@ -17,6 +17,8 @@ import java.security.Key;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.impl.crypto.MacProvider;
+import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
 
 import com.databases.project.models.LoginForm;
 import com.databases.project.models.CreditCard;
@@ -57,7 +59,12 @@ public class Authentication implements IAuthentication {
   }
 
   public String generateToken(String username){
-    Key key = MacProvider.generateKey();
+    //The JWT signature algorithm we will be using to sign the token
+    SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
+    
+    //We will sign our JWT with our ApiKey secret
+    byte[] apiKeySecretBytes = DatatypeConverter.parseBase64Binary("regal");
+    Key signingKey = new SecretKeySpec(apiKeySecretBytes, signatureAlgorithm.getJcaName());
 
     long nowMillis = System.currentTimeMillis();
     long expMillis = nowMillis + 12000000;
@@ -70,9 +77,8 @@ public class Authentication implements IAuthentication {
     .claim("username", username)
     .claim("warning-time", warn)
     .setExpiration(exp)
-    .signWith(SignatureAlgorithm.HS512, key)
+    .signWith(signatureAlgorithm, signingKey)
     .compact();
-
 
     return compactJws;
   }

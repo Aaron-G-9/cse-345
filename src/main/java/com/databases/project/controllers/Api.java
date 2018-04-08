@@ -22,6 +22,13 @@ import java.util.Date ;
 import java.util.List;
 import java.util.Map;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import java.security.Key;
+import io.jsonwebtoken.impl.crypto.MacProvider;
+import javax.crypto.spec.SecretKeySpec;
+import javax.xml.bind.DatatypeConverter;
+import io.jsonwebtoken.SignatureAlgorithm;
 
 @CrossOrigin
 @RestController
@@ -55,10 +62,26 @@ public class Api {
     public List<Account> getUserAccounts(){
       return bankservice.getUserAccounts("amgoodfellow");
     } 
+
+    //@RequestMapping("/getUserCredit")
+    //public List<CreditCard> getUserCredit(HttpServletRequest request){
+    //  String jwt = request.getHeader("Authorization");
+
+    //  Claims claims = Jwts.parser()         
+    //   .setSigningKey(DatatypeConverter.parseBase64Binary("regal"))
+    //   .parseClaimsJws(jwt).getBody();
+
+    //  return bankservice.getUserCredit(claims.get("username").toString());
+    //} 
       
     @RequestMapping("/getAccountSummary")
-    public Map<String, List<Transaction>> getAccountSummary(){
-      return bankservice.getUserOverview("amgoodfellow");
+    public Map<String, List<Transaction>> getAccountSummary(HttpServletRequest request){
+      String jwt = request.getHeader("Authorization");
+
+      Claims claims = Jwts.parser()         
+       .setSigningKey(DatatypeConverter.parseBase64Binary("regal"))
+       .parseClaimsJws(jwt).getBody();
+      return bankservice.getUserOverview(claims.get("username").toString());
     }
 
     @PostMapping("/createUser")
