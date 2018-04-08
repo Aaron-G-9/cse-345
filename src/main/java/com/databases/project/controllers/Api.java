@@ -46,6 +46,22 @@ public class Api {
       return bankservice.getCreditTypes();
     }
 
+    @RequestMapping("/getAccountTypes")
+    public List<Account> getAccountTypes() {
+      return bankservice.getAccountTypes();
+    }
+
+    //@RequestMapping("/getUserAccounts")
+    //public Map<Account, List<Transaction>> getUserAccounts(){
+    //  
+    //}
+
+    @RequestMapping("/getUserAccounts")
+    public List<Account> getUserAccounts(){
+      return bankservice.getUserOverview("amgoodfellow");
+      
+    }
+
     @PostMapping("/createUser")
     public String createUser(@ModelAttribute Customer customer){
       String token = "";
