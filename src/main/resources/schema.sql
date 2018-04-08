@@ -20,9 +20,6 @@ create table customer (
   zipcode text 
 );
 
-insert into customer (first_name, last_name, date_of_birth, email, gender, username, c_password, security_question, security_answer) 
-values
-('aaron', 'goodfellow', '1996-12-06', 'amgoodfellow@oakland.edu', 'male', 'amgoodfellow', 'je suis me', 'favorite color?', 'green');
 
 create table credit_cards(
   card_id serial primary key,
@@ -37,6 +34,17 @@ create table credit_cards(
   reward_bonus DECIMAL(13,2),
   late_fee DECIMAL(13,2),
   credit_history enum('excellent', 'good', 'bad')
+);
+
+/* I need better naming conventions. Ask KaJuan */
+create table has_credit_card(
+  id serial,
+  customer_id bigint unsigned,
+  card_id bigint unsigned,
+  foreign key (customer_id) REFERENCES customer (customer_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT,
+  foreign key (card_id) REFERENCES credit_cards (card_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 Insert into credit_cards (card_name, annual_fees, intro_apr, months_of_intro_apr, regular_apr_min, regular_apr_max, reward_rate_min, reward_rate_max, reward_bonus, late_fee, credit_history) values
@@ -81,6 +89,15 @@ create table loans (
   monthly_payment_minimum decimal(13,2)
 );
 
+create table has_loan(
+  id serial,
+  customer_id bigint unsigned,
+  loan_id bigint unsigned,
+  foreign key (customer_id) REFERENCES customer (customer_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT,
+  foreign key (loan_id) REFERENCES loans (loan_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT
+);
 
 /* Interest rollover bank wide on certain dates */
 create table accounts (
@@ -95,6 +112,16 @@ create table accounts (
   processing_delay bigint,
   minimum_balance DECIMAL(13,2),
   minimum_deposit DECIMAL(13,2)
+);
+
+create table has_account(
+  id serial,
+  customer_id bigint unsigned,
+  account_id bigint unsigned,
+  foreign key (customer_id) REFERENCES customer (customer_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT,
+  foreign key (account_id) REFERENCES accounts (account_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
 insert into accounts 
@@ -126,3 +153,11 @@ create table transactions (
   foreign key (loan_id) REFERENCES loans (loan_id)
     ON UPDATE CASCADE ON DELETE RESTRICT
 );
+
+insert into customer (first_name, last_name, date_of_birth, email, gender, username, c_password, security_question, security_answer) 
+values
+('aaron', 'goodfellow', '1996-12-06', 'amgoodfellow@oakland.edu', 'male', 'amgoodfellow', 'je suis me', 'favorite color?', 'green');
+
+insert into has_credit_card (customer_id, card_id) values (1, 2);
+insert into has_account (customer_id, account_id) values (1, 1);
+insert into has_account (customer_id, account_id) values (1, 4);
