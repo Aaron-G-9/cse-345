@@ -141,8 +141,10 @@ create table transactions (
   creation_fee decimal(13,2),
   credit_id bigint unsigned,
   loan_id bigint unsigned,
-  old_balance DECIMAL(13,2),
-  delta DECIMAL(13,2), 
+  old_balance DECIMAL(13,2) not null,
+  delta DECIMAL(13,2) not null, 
+  new_balance DECIMAL(13,2) as (old_balance + delta),
+  transaction_time timestamp default current_timestamp,
   status enum('pending', 'finished'),
   foreign key (account_id) REFERENCES accounts (account_id)
     ON UPDATE CASCADE ON DELETE RESTRICT,
@@ -161,3 +163,6 @@ values
 insert into has_credit_card (customer_id, card_id) values (1, 2);
 insert into has_account (customer_id, account_id) values (1, 1);
 insert into has_account (customer_id, account_id) values (1, 4);
+
+insert into transactions (account_id, customer_id, old_balance, delta) values (1, 1, 0, 500);
+insert into transactions (account_id, customer_id, old_balance, delta) values (4, 1, 0, 1500);

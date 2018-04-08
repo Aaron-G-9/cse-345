@@ -57,7 +57,7 @@ public class Api {
     //}
 
     @RequestMapping("/getUserAccounts")
-    public List<Account> getUserAccounts(){
+    public Map<String, List<Transaction>> getUserAccounts(){
       return bankservice.getUserOverview("amgoodfellow");
       
     }

@@ -11,6 +11,7 @@ import com.databases.project.models.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;;
 
 
 @Service
@@ -46,9 +47,9 @@ public class BankService implements IBankService {
 
   }
 
-  public List<Account> getUserOverview(String username){
+  public Map<String, List<Transaction>> getUserOverview(String username){
     RowMapper<Account> rowMapper = (rs, rowNum) -> {
-      return new Account(rs.getString("account_name"),  AccountType.valueOf(rs.getString("account_type")), 
+      return new Account(rs.getInt("account_id"), rs.getString("account_name"),  AccountType.valueOf(rs.getString("account_type")), 
         rs.getDouble("early_withdraw_fee"), rs.getDouble("max_withdraw"), rs.getInt("min_age"), rs.getInt("max_age"), 
         rs.getDouble("interest"), rs.getLong("processing_delay"), rs.getDouble("minimum_balance"), 
         rs.getDouble("minimum_deposit"));
@@ -58,11 +59,28 @@ public class BankService implements IBankService {
                         "select customer_id from customer where username = ?", new Object[] { username }, Integer.class);
 
     String sql = "select * from has_account inner join accounts on has_account.account_id = accounts.account_id where has_account.customer_id = ?;";
-    List<Account> accountIdList = jdbcTemplate.query(sql, rowMapper, customerId);
+    List<Account> accountList = jdbcTemplate.query(sql, rowMapper, customerId);
 
+    RowMapper<Transaction> transactionMapper = (rs, rowNum) -> {
+      System.out.println(rs.getDouble("delta"));
+      return new Transaction(rs.getInt("account_id"), rs.getDouble("creation_fee"), rs.getInt("credit_id"),
+                             rs.getInt("loan_id"), rs.getDouble("old_balance"), rs.getDouble("delta"), 
+                             rs.getDouble("new_balance"), rs.getTimestamp("transaction_time"));
+    }; 
 
-    return accountIdList;
-    
+    String transactionSql = "select * from transactions where customer_id = ? and account_id = ?  order by transaction_time limit 5";
 
+    List<List<Transaction>> transactionList = new ArrayList<List<Transaction>>();
+    for (Account account : accountList){
+      transactionList.add(jdbcTemplate.query(transactionSql, transactionMapper, customerId, account.getAccountId()));
+    }
+
+    Map<String, List<Transaction>> endResult = new HashMap<>();
+
+    for(int i = 0; i < accountList.size(); i++){
+      endResult.put(accountList.get(i).getAccountName(), transactionList.get(i));
+    }
+
+    return endResult;
   }
 }
