@@ -10,6 +10,7 @@ public interface IBankService{
   
   public List<Account> getAccountTypes();
 
-  //public Map<Account, List<Transaction>> getUserOverview(String username);
   public Map<String, List<Transaction>> getUserOverview(String username);
+
+  public List<Account> getUserAccounts(String username);
 }

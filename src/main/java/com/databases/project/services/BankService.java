@@ -47,7 +47,7 @@ public class BankService implements IBankService {
 
   }
 
-  public Map<String, List<Transaction>> getUserOverview(String username){
+  public List<Account> getUserAccounts(String username){
     RowMapper<Account> rowMapper = (rs, rowNum) -> {
       return new Account(rs.getInt("account_id"), rs.getString("account_name"),  AccountType.valueOf(rs.getString("account_type")), 
         rs.getDouble("early_withdraw_fee"), rs.getDouble("max_withdraw"), rs.getInt("min_age"), rs.getInt("max_age"), 
@@ -60,6 +60,12 @@ public class BankService implements IBankService {
 
     String sql = "select * from has_account inner join accounts on has_account.account_id = accounts.account_id where has_account.customer_id = ?;";
     List<Account> accountList = jdbcTemplate.query(sql, rowMapper, customerId);
+
+    return accountList;
+  }
+
+  public Map<String, List<Transaction>> getUserOverview(String username){
+    List<Account> accountList = getUserAccounts(username);
 
     RowMapper<Transaction> transactionMapper = (rs, rowNum) -> {
       System.out.println(rs.getDouble("delta"));

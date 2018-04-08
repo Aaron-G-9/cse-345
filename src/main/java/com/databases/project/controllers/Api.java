@@ -51,15 +51,14 @@ public class Api {
       return bankservice.getAccountTypes();
     }
 
-    //@RequestMapping("/getUserAccounts")
-    //public Map<Account, List<Transaction>> getUserAccounts(){
-    //  
-    //}
-
     @RequestMapping("/getUserAccounts")
-    public Map<String, List<Transaction>> getUserAccounts(){
-      return bankservice.getUserOverview("amgoodfellow");
+    public List<Account> getUserAccounts(){
+      return bankservice.getUserAccounts("amgoodfellow");
+    } 
       
+    @RequestMapping("/getAccountSummary")
+    public Map<String, List<Transaction>> getAccountSummary(){
+      return bankservice.getUserOverview("amgoodfellow");
     }
 
     @PostMapping("/createUser")
