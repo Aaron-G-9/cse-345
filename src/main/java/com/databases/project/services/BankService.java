@@ -11,6 +11,7 @@ import com.databases.project.models.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.sql.Timestamp;
 import java.util.HashMap;;
 
 
@@ -25,7 +26,7 @@ public class BankService implements IBankService {
       return new CreditCard(rs.getInt("card_id"), rs.getString("card_name"), rs.getDouble("annual_fees"), 
         rs.getDouble("intro_apr"), rs.getInt("months_of_intro_apr"), rs.getDouble("regular_apr_min"), 
         rs.getDouble("regular_apr_max"), rs.getDouble("reward_rate_min"), rs.getDouble("reward_rate_max"), 
-        rs.getDouble("reward_bonus"), rs.getDouble("late_fee"), rs.getString("credit_history"));
+        rs.getDouble("reward_bonus"), rs.getDouble("late_fee"), CreditHistory.valueOf(rs.getString("credit_history")));
     };
 
     String sql = "SELECT * FROM credit_cards;";
@@ -64,24 +65,47 @@ public class BankService implements IBankService {
     return accountList;
   }
 
+  public List<CreditCard> getUserCredit(String username){
+    RowMapper<CreditCard> rowMapper = (rs, rowNum) -> {
+      return new CreditCard(rs.getInt("card_id"), rs.getString("card_name"), rs.getDouble("annual_fees"), rs.getDouble("intro_apr"), 
+                            rs.getInt("months_of_intro_apr"), rs.getDouble("regular_apr_min"), rs.getDouble("regular_apr_max"),
+                            rs.getDouble("reward_rate_min"), rs.getDouble("reward_rate_max"), rs.getDouble("reward_bonus"),
+                            rs.getDouble("late_fee"), CreditHistory.valueOf(rs.getString("credit_history")));
+    };
+
+    int customerId = jdbcTemplate.queryForObject(
+                        "select customer_id from customer where username = ?", new Object[] { username }, Integer.class);
+
+    String sql = "select * from has_credit_card inner join credit_cards on has_credit_card.card_id = credit_cards.card_id where has_credit_card.customer_id = ?;";
+    List<CreditCard> creditList = jdbcTemplate.query(sql, rowMapper, customerId);
+
+    return creditList;
+  }
+
   public Map<String, List<Transaction>> getUserOverview(String username){
     List<Account> accountList = getUserAccounts(username);
+    List<CreditCard> creditList = getUserCredit(username);
 
     int customerId = jdbcTemplate.queryForObject(
                         "select customer_id from customer where username = ?", new Object[] { username }, Integer.class);
 
     RowMapper<Transaction> transactionMapper = (rs, rowNum) -> {
-      System.out.println(rs.getDouble("delta"));
       return new Transaction(rs.getInt("account_id"), rs.getDouble("creation_fee"), rs.getInt("credit_id"),
                              rs.getInt("loan_id"), rs.getDouble("old_balance"), rs.getDouble("delta"), 
                              rs.getDouble("new_balance"), rs.getTimestamp("transaction_time"));
     }; 
 
-    String transactionSql = "select * from transactions where customer_id = ? and account_id = ?  order by transaction_time limit 5";
+    String transactionSql = "select * from transactions where customer_id = ? and account_id = ?  order by transaction_time limit 5;";
 
     List<List<Transaction>> transactionList = new ArrayList<List<Transaction>>();
     for (Account account : accountList){
       transactionList.add(jdbcTemplate.query(transactionSql, transactionMapper, customerId, account.getAccountId()));
+    }
+
+    String creditTransactionSql = "select * from transactions where customer_id = ? and credit_id = ? order by transaction_time limit 5;";
+
+    for (CreditCard card : creditList){
+      transactionList.add(jdbcTemplate.query(creditTransactionSql, transactionMapper, customerId, card.getId()));
     }
 
     Map<String, List<Transaction>> endResult = new HashMap<>();
@@ -90,6 +114,36 @@ public class BankService implements IBankService {
       endResult.put(accountList.get(i).getAccountName(), transactionList.get(i));
     }
 
+    int j = accountList.size();
+    for(int i = 0; i < creditList.size(); i++){
+      endResult.put(creditList.get(i).getName() + " Credit", transactionList.get(j));
+      j++;
+    }
+
     return endResult;
+  }
+
+
+  public int setComplaint(int customerId, String employeeName, String subject, Timestamp fileDate) {
+    try {
+      int i = jdbcTemplate.update(
+      "insert into complaints (customer_id, employee_name, subject, filed_on) values (?, ?, ?, ?)",
+      new Object[] {customerId, employeeName, subject, fileDate});
+      return i;
+    } catch (Exception e) {
+      throw e;
+    }
+  }
+
+
+  public int getCustomerID(String username) {
+    try {
+      int customerId = jdbcTemplate.queryForObject(
+          "select customer_id from customer where username = ?",
+          new Object[] {username}, Integer.class);
+      return customerId;
+    } catch (Exception e) {
+      throw e;
+    }
   }
 }

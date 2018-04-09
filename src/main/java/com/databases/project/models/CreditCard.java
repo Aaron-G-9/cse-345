@@ -17,13 +17,13 @@ public class CreditCard {
   private double rewardRateMax;
   private double rewardBonus;
   private double lateFee;
-  private String creditHistory;
+  private CreditHistory creditHistory;
 
   public CreditCard(){}
 
   public CreditCard(int id, String name, double annualFee, double introApr, int monthsOfIntro,
     double regularAprMin, double regularAprMax, double rewardRateMin, double rewardRateMax, 
-    double rewardBonus, double lateFee, String creditHistory){
+    double rewardBonus, double lateFee, CreditHistory creditHistory){
 
       this.id = id;
       this.name = name;

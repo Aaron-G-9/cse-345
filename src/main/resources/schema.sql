@@ -75,6 +75,7 @@ create table employee(
 create table complaints(
   customer_id bigint unsigned, 
   employee_id bigint unsigned,
+  employee_name VARCHAR(100),
   subject text not null,
   filed_on date not null,
   foreign key (customer_id) REFERENCES customer (customer_id)
@@ -166,3 +167,4 @@ insert into has_account (customer_id, account_id) values (1, 4);
 
 insert into transactions (account_id, customer_id, old_balance, delta) values (1, 1, 0, 500);
 insert into transactions (account_id, customer_id, old_balance, delta) values (4, 1, 0, 1500);
+insert into transactions (credit_id, customer_id, old_balance, delta) values (2, 1, 0, 2000);

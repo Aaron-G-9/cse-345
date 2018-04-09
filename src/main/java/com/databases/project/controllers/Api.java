@@ -29,6 +29,10 @@ import io.jsonwebtoken.impl.crypto.MacProvider;
 import javax.crypto.spec.SecretKeySpec;
 import javax.xml.bind.DatatypeConverter;
 import io.jsonwebtoken.SignatureAlgorithm;
+import java.time.LocalDateTime;
+import java.sql.Timestamp;
+import java.util.HashMap;
+
 
 @CrossOrigin
 @RestController
@@ -63,16 +67,16 @@ public class Api {
       return bankservice.getUserAccounts("amgoodfellow");
     } 
 
-    //@RequestMapping("/getUserCredit")
-    //public List<CreditCard> getUserCredit(HttpServletRequest request){
-    //  String jwt = request.getHeader("Authorization");
+    @RequestMapping("/getUserCredit")
+    public List<CreditCard> getUserCredit(HttpServletRequest request){
+      String jwt = request.getHeader("Authorization");
 
-    //  Claims claims = Jwts.parser()         
-    //   .setSigningKey(DatatypeConverter.parseBase64Binary("regal"))
-    //   .parseClaimsJws(jwt).getBody();
+      Claims claims = Jwts.parser()         
+       .setSigningKey(DatatypeConverter.parseBase64Binary("regal"))
+       .parseClaimsJws(jwt).getBody();
 
-    //  return bankservice.getUserCredit(claims.get("username").toString());
-    //} 
+      return bankservice.getUserCredit(claims.get("username").toString());
+    } 
       
     @RequestMapping("/getAccountSummary")
     public Map<String, List<Transaction>> getAccountSummary(HttpServletRequest request){
@@ -111,5 +115,28 @@ public class Api {
 
 
     }
+
+  @RequestMapping(value = "/complaint", produces = "application/json")
+  public Map<String, String> complaint(
+      @RequestParam(value = "message", required = true) String message,
+      @RequestParam(value = "customer", required = true) String customer,
+      @RequestParam(value = "employee", required = true) String employee) {
+    Map<String, String> map = new HashMap<>();
+    Claims claims =
+        Jwts.parser()
+            .setSigningKey(DatatypeConverter.parseBase64Binary("regal"))
+            .parseClaimsJws(customer)
+            .getBody();
+    int customerId = bankservice.getCustomerID((String) claims.get("username"));
+    LocalDateTime now = LocalDateTime.now();
+    int i = bankservice.setComplaint(customerId, employee, message, Timestamp.valueOf(now));
+    if(i == 0) {
+      map.put("status", "failure");
+      return map;
+    } else {
+      map.put("status", "success");
+      return map;
+    }
+  }
 
 }
