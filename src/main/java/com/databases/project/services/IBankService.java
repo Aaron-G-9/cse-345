@@ -20,4 +20,10 @@ public interface IBankService{
   public int setComplaint(int customerId, String employeeName, String subject, Timestamp fileDate);
 
   public int getCustomerID(String username);
+
+  public Map<String, List<String>> getAllUserAccountTypes(String username);
+
+  public Map<String, Double> getCustomerBalances(String username);
+
+  public String addTransaction(String username, String type, int id, double amount);
 }

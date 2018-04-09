@@ -12,7 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.sql.Timestamp;
-import java.util.HashMap;;
+import java.util.HashMap;
+import java.math.BigDecimal;
 
 
 @Service
@@ -95,14 +96,14 @@ public class BankService implements IBankService {
                              rs.getDouble("new_balance"), rs.getTimestamp("transaction_time"));
     }; 
 
-    String transactionSql = "select * from transactions where customer_id = ? and account_id = ?  order by transaction_time limit 5;";
+    String transactionSql = "select * from transactions where customer_id = ? and account_id = ?  order by transaction_time desc limit 5;";
 
     List<List<Transaction>> transactionList = new ArrayList<List<Transaction>>();
     for (Account account : accountList){
       transactionList.add(jdbcTemplate.query(transactionSql, transactionMapper, customerId, account.getAccountId()));
     }
 
-    String creditTransactionSql = "select * from transactions where customer_id = ? and credit_id = ? order by transaction_time limit 5;";
+    String creditTransactionSql = "select * from transactions where customer_id = ? and credit_id = ? order by transaction_time desc limit 5;";
 
     for (CreditCard card : creditList){
       transactionList.add(jdbcTemplate.query(creditTransactionSql, transactionMapper, customerId, card.getId()));
@@ -121,6 +122,32 @@ public class BankService implements IBankService {
     }
 
     return endResult;
+  }
+
+  public Map<String, List<String>> getAllUserAccountTypes(String username){
+    RowMapper<String> creditMapper = (rs, rowNum) -> {
+      return rs.getString("card_name") + " Credit";
+    };
+
+    RowMapper<String> accountMapper = (rs, rowNum) -> {
+      return rs.getString("account_name");
+    };
+
+    int customerId = getCustomerID(username);
+
+    String creditNameSql = "select * from has_credit_card inner join credit_cards on has_credit_card.card_id = credit_cards.card_id where has_credit_card.customer_id = ?;";
+    List<String> creditList = jdbcTemplate.query(creditNameSql, creditMapper, customerId);
+
+    String accountNameSql = "select * from has_account inner join accounts on has_account.account_id = accounts.account_id where has_account.customer_id = ?;";
+    List<String> accountList = jdbcTemplate.query(accountNameSql, accountMapper, customerId);
+
+    Map<String, List<String>> accountMap = new HashMap<>(3);
+
+    accountMap.put("Regal Accounts", accountList);
+    accountMap.put("Regal Credit", creditList);
+
+
+    return accountMap;
   }
 
 
@@ -145,5 +172,57 @@ public class BankService implements IBankService {
     } catch (Exception e) {
       throw e;
     }
+  }
+
+  public Map<String, Double> getCustomerBalances(String username){
+    int customerId = getCustomerID(username);
+
+    String accountSQL = "select account_name, new_balance from transactions inner join accounts on transactions.account_id = accounts.account_id " +
+                          "where customer_id = ? and transactions.account_id is not null;";
+
+    String creditSQL = "select card_name, new_balance from transactions inner join credit_cards on transactions.credit_id = credit_cards.card_id " +
+      "where customer_id = ? and transactions.credit_id is not null;";
+
+    List<Map<String, Object>> accountList = jdbcTemplate.queryForList(accountSQL, customerId);
+    List<Map<String, Object>> creditList = jdbcTemplate.queryForList(creditSQL, customerId);
+
+    Map<String, Double> resultMap = new HashMap<>();
+
+    for (Map<String, Object> account : accountList){
+      String key = (String) account.get("account_name");
+      BigDecimal bigValue = (BigDecimal) account.get("new_balance");
+      Double value = bigValue.doubleValue();
+      resultMap.put(key, value);
+    }
+
+    for (Map<String, Object> card : creditList){
+      String key = (String) card.get("card_name");
+      BigDecimal bigValue = (BigDecimal) card.get("new_balance");
+      Double value = bigValue.doubleValue();
+      resultMap.put(key, value);
+    }
+    
+    return resultMap;
+  }
+
+  public String addTransaction(String username, String type, int id, double amount){
+    int customerId = getCustomerID(username);
+    String sql;
+    try{
+      if (type.equals("account")){
+        double oldBalance = jdbcTemplate.queryForObject("select new_balance from transactions where customer_id = ? and account_id = ? order by transaction_time desc limit 1",
+          new Object[] {customerId, id}, Double.class );
+        sql = "insert into transactions (account_id, customer_id, old_balance, delta) values (?, ?, ?, ?);";
+        jdbcTemplate.update(sql, new Object[] {id, customerId, oldBalance, amount} );
+      }else if (type.equals("credit")){
+        double oldBalance = jdbcTemplate.queryForObject("select new_balance from transactions where customer_id = ? and card_id = ? order by transaction_time desc limit 1",
+          new Object[] {customerId, id}, Double.class );
+        sql = "insert into transactions (credit_id, customer_id, old_balance, delta) values (?, ?, ?, ?);";
+        jdbcTemplate.update(sql, new Object[] {id, customerId, oldBalance, amount} );
+      }
+    }catch(Error e){
+      return e.toString();
+    }
+    return "success";
   }
 }

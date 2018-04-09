@@ -63,9 +63,43 @@ public class Api {
     }
 
     @RequestMapping("/getUserAccounts")
-    public List<Account> getUserAccounts(){
-      return bankservice.getUserAccounts("amgoodfellow");
+    public List<Account> getUserAccounts(HttpServletRequest request){
+      String jwt = request.getHeader("Authorization");
+
+      Claims claims = Jwts.parser()         
+       .setSigningKey(DatatypeConverter.parseBase64Binary("regal"))
+       .parseClaimsJws(jwt).getBody();
+
+      return bankservice.getUserAccounts(claims.get("username").toString());
     } 
+
+    @RequestMapping("/getCustomerBalances")
+    public Map<String, Double> getCustomerBalances(HttpServletRequest request){
+      String jwt = request.getHeader("Authorization");
+
+      Claims claims = Jwts.parser()         
+       .setSigningKey(DatatypeConverter.parseBase64Binary("regal"))
+       .parseClaimsJws(jwt).getBody();
+
+      return bankservice.getCustomerBalances(claims.get("username").toString());
+    } 
+
+    @RequestMapping("/addTransaction")
+    public String addTransaction(
+      @RequestParam(value = "type", required = true) String type, 
+      @RequestParam(value = "id", required = true) int id, 
+      @RequestParam(value = "amount", required = true) double amount, 
+      HttpServletRequest request){
+
+      String jwt = request.getHeader("Authorization");
+
+      Claims claims = Jwts.parser()         
+        .setSigningKey(DatatypeConverter.parseBase64Binary("regal"))
+        .parseClaimsJws(jwt).getBody();
+      
+      return bankservice.addTransaction(claims.get("username").toString(), type, id, amount);
+
+    }
 
     @RequestMapping("/getUserCredit")
     public List<CreditCard> getUserCredit(HttpServletRequest request){
@@ -137,6 +171,16 @@ public class Api {
       map.put("status", "success");
       return map;
     }
+  }
+
+  @RequestMapping("/allUserAccounts")
+  public Map<String, List<String>> getAllUserAccountTypes(HttpServletRequest request){
+    String jwt = request.getHeader("Authorization");
+
+    Claims claims = Jwts.parser()         
+      .setSigningKey(DatatypeConverter.parseBase64Binary("regal"))
+      .parseClaimsJws(jwt).getBody();
+    return bankservice.getAllUserAccountTypes(claims.get("username").toString());
   }
 
 }
