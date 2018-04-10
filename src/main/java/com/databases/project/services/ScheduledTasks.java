@@ -5,9 +5,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 class ScheduledTasks {
-  @Scheduled(fixedRate = 2000)
-  public void scheduleTaskWithFixedRate() {
-      System.out.println("Fixed Rate Task");
-      System.out.println("WOAH");
+  @Scheduled(fixedRate = 2628000)
+  public static void updateInterest(){
+    //Update interest
   }
 }

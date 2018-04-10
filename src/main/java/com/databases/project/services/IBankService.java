@@ -26,4 +26,6 @@ public interface IBankService{
   public Map<String, Double> getCustomerBalances(String username);
 
   public String addTransaction(String username, String type, int id, double amount);
+
+  public List<Transaction> getTransactionHistory(String username, String type, int id);
 }

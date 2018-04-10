@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.sql.Timestamp;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.math.BigDecimal;
 
 
@@ -224,5 +225,36 @@ public class BankService implements IBankService {
       return e.toString();
     }
     return "success";
+  }
+
+  public List<Transaction> getTransactionHistory(String username, String type, int id){
+    int customerId = getCustomerID(username);
+
+    String accountSql = "";
+    RowMapper<Transaction> rowMapper;
+    rowMapper = (rs, rowNum) -> {
+    return new Transaction(rs.getInt("customer_id"), rs.getDouble("creation_fee"), rs.getInt("credit_id"),
+                            rs.getInt("loan_id"), rs.getDouble("old_balance"), rs.getDouble("delta"), 
+                            rs.getDouble("new_balance"), rs.getTimestamp("transaction_time"));
+    };
+
+    if (type.equals("account")){
+      accountSql = "select * from transactions where customer_id = ? and account_id = ? order by transaction_time desc limit 25";
+    }else if (type.equals("credit")){
+      accountSql = "select * from transactions where customer_id = ? and credit_id = ? order by transaction_time desc limit 25";
+      rowMapper = (rs, rowNum) -> {
+      return new Transaction(rs.getInt("customer_id"), rs.getDouble("creation_fee"), 
+                              rs.getInt("loan_id"), rs.getDouble("old_balance"), rs.getDouble("delta"), 
+                              rs.getDouble("new_balance"), rs.getTimestamp("transaction_time"), rs.getInt("account_id"));
+      };
+    }else if (type.equals("loan")){
+
+    }
+
+    List<Transaction> transactions = jdbcTemplate.query(accountSql, rowMapper, customerId, id);
+
+
+
+    return transactions;
   }
 }

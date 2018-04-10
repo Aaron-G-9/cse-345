@@ -183,4 +183,19 @@ public class Api {
     return bankservice.getAllUserAccountTypes(claims.get("username").toString());
   }
 
+
+  @RequestMapping("/transactionHistory")
+  public List<Transaction> transactionHistory(
+      @RequestParam(value = "type", required = true) String type,
+      @RequestParam(value = "id", required = true) int id,
+      HttpServletRequest request){
+
+    String jwt = request.getHeader("Authorization");
+
+    Claims claims = Jwts.parser()         
+      .setSigningKey(DatatypeConverter.parseBase64Binary("regal"))
+      .parseClaimsJws(jwt).getBody();
+    return bankservice.getTransactionHistory(claims.get("username").toString(), type, id);
+  }
+
 }
