@@ -55,4 +55,15 @@ public class Transaction {
    this.transactionTime = transactionTime;
  }
 
+ public Transaction(int loanId, int customerId, double creationFee, double oldBalance, double delta, 
+                    double newBalance, Timestamp transactionTime){
+   this.customerId = customerId;
+   this.creationFee = creationFee;
+   this.loanId = loanId;
+   this.oldBalance = oldBalance;
+   this.delta = delta;
+   this.newBalance = newBalance;
+   this.transactionTime = transactionTime;
+ }
+
 }

@@ -41,4 +41,6 @@ public interface IBankService{
 
   public String addAccount(String username, String name);
 
+  public List<Loan> getUserLoans(String username);
+
 }

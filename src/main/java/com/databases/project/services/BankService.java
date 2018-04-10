@@ -90,9 +90,24 @@ public class BankService implements IBankService {
     return creditList;
   }
 
+  public List<Loan> getUserLoans(String username){
+    RowMapper<Loan> rowMapper = (rs, rowNum) -> {
+      return new Loan(rs.getInt("loan_id"), rs.getString("loan_name"), rs.getDouble("monthly_payment_minimum"), rs.getString("necessary_credit") ); 
+    };
+
+    int customerId = jdbcTemplate.queryForObject(
+                        "select customer_id from customer where username = ?", new Object[] { username }, Integer.class);
+
+    String sql = "select * from has_loan inner join loans on has_loan.loan_id = loans.loan_id where has_loan.customer_id = ?;";
+    List<Loan> creditList = jdbcTemplate.query(sql, rowMapper, customerId);
+
+    return creditList;
+  }
+
   public Map<String, List<Transaction>> getUserOverview(String username){
     List<Account> accountList = getUserAccounts(username);
     List<CreditCard> creditList = getUserCredit(username);
+    List<Loan> loanList = getUserLoans(username);
 
     int customerId = jdbcTemplate.queryForObject(
                         "select customer_id from customer where username = ?", new Object[] { username }, Integer.class);
@@ -116,6 +131,12 @@ public class BankService implements IBankService {
       transactionList.add(jdbcTemplate.query(creditTransactionSql, transactionMapper, customerId, card.getId()));
     }
 
+    String loanTransactionSql = "select * from transactions where customer_id = ? and loan_id = ? order by transaction_time desc limit 5;";
+
+    for (Loan loan : loanList){
+      transactionList.add(jdbcTemplate.query(loanTransactionSql, transactionMapper, customerId, loan.getId()));
+    }
+
     Map<String, List<Transaction>> endResult = new HashMap<>();
 
     for(int i = 0; i < accountList.size(); i++){
@@ -125,6 +146,11 @@ public class BankService implements IBankService {
     int j = accountList.size();
     for(int i = 0; i < creditList.size(); i++){
       endResult.put(creditList.get(i).getName() + " Credit", transactionList.get(j));
+      j++;
+    }
+
+    for(int i = 0; i < loanList.size(); i++){
+      endResult.put(loanList.get(i).getLoanName(), transactionList.get(j));
       j++;
     }
 
@@ -254,6 +280,12 @@ public class BankService implements IBankService {
                               rs.getDouble("new_balance"), rs.getTimestamp("transaction_time"), rs.getInt("account_id"));
       };
     }else if (type.equals("loan")){
+      accountSql = "select * from transactions where customer_id = ? and loan_id = ? order by transaction_time desc limit 25";
+      rowMapper = (rs, rowNum) -> {
+      return new Transaction(rs.getInt("loan_id"), rs.getInt("customer_id"), rs.getDouble("creation_fee"), 
+                              rs.getDouble("old_balance"), rs.getDouble("delta"), 
+                              rs.getDouble("new_balance"), rs.getTimestamp("transaction_time"));
+      };
 
     }
 
@@ -396,8 +428,26 @@ public class BankService implements IBankService {
 
       return "Success!";
 
-    }else if (name.contains("Loan")){
+    }else if (name.contains("loan")){
       sql = "select * from loans where loan_name = ?";
+      RowMapper<Loan> rowMapper;
+      rowMapper = (rs, rowNum) -> {
+        return new Loan(rs.getInt("loan_id"), rs.getString("loan_name"), rs.getDouble("monthly_payment_minimum"), rs.getString("necessary_credit") ); 
+      };
+      List<Loan> loans = jdbcTemplate.query(sql, rowMapper, name);
+      Loan loan = loans.get(0);
+
+      if (!goodEnoughCredit(customer.getCreditHistory(), loan.getCreditHistory())){
+        return "You do not have sufficient credit";
+      }
+
+      jdbcTemplate.update("insert into has_loan (customer_id, loan_id) values (?, ?)", customerId, loan.getId());
+      jdbcTemplate.update(
+        "insert into transactions (loan_id, customer_id, old_balance, delta) values (?, ?, 0, -2000)",
+         loan.getId(), customerId 
+      );
+
+
     }else{
       sql= "select * from accounts where account_name = ?";
       RowMapper<Account> rowMapper;
@@ -426,9 +476,6 @@ public class BankService implements IBankService {
         "insert into transactions (account_id, customer_id, old_balance, delta) values (?, ?, 0, 10)",
          account.getAccountId(), customerId 
       );
-
-      return "Success!";
-      
 
     }
 

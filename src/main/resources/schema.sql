@@ -87,8 +87,15 @@ create table complaints(
 create table loans (
   loan_id serial primary key,
   loan_name VARCHAR(100),
+  necessary_credit VARCHAR(100),
   monthly_payment_minimum decimal(13,2)
 );
+
+insert into loans (loan_name, necessary_credit, monthly_payment_minimum) values
+( 'personal loan', 'good', 100), 
+('housing loan', 'excellent', 100), 
+('car loan', 'good', 100), 
+('medical loan', 'bad', 100 );
 
 create table has_loan(
   id serial,

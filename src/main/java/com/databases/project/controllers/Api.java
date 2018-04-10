@@ -111,6 +111,17 @@ public class Api {
 
       return bankservice.getUserCredit(claims.get("username").toString());
     } 
+
+    @RequestMapping("/getUserLoans")
+    public List<Loan> getUserLoans(HttpServletRequest request){
+      String jwt = request.getHeader("Authorization");
+
+      Claims claims = Jwts.parser()         
+       .setSigningKey(DatatypeConverter.parseBase64Binary("regal"))
+       .parseClaimsJws(jwt).getBody();
+
+      return bankservice.getUserLoans(claims.get("username").toString());
+    } 
       
     @RequestMapping("/getAccountSummary")
     public Map<String, List<Transaction>> getAccountSummary(HttpServletRequest request){
