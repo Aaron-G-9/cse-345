@@ -198,4 +198,28 @@ public class Api {
     return bankservice.getTransactionHistory(claims.get("username").toString(), type, id);
   }
 
+  @RequestMapping("/punch")
+  public String punch(
+      @RequestParam(value = "type", required = true) String type,
+      @RequestParam(value = "id", required = true) int id){
+    
+    return bankservice.punch(type, id);
+  }
+
+  @RequestMapping("/getEmployees")
+  public Map<Integer, String> getEmployees(){
+    return bankservice.getEmployees();
+  }
+
+  @RequestMapping("/getEmployeeInfo")
+  public Employee getEmployeeInfo(@RequestParam(value="id", required=true) int id){
+    return bankservice.getEmployeeInfo(id);
+  }
+
+  @RequestMapping("/getPunchInfo")
+  public List<Timesheet> getPunchInfo(@RequestParam(value="id", required=true) int id){
+    return bankservice.getPunchInfo(id);
+  }
+
+
 }

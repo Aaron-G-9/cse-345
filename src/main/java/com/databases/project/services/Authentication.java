@@ -72,10 +72,20 @@ public class Authentication implements IAuthentication {
 
     Date exp = new Date(expMillis);
     Date warn = new Date(warnMillis);
+    boolean isAdmin = false;
+    if (username.equals("amgoodfellow") || username.equals("calee")){
+      isAdmin = true;
+    }
+
+    System.out.println("ISADMIN = TRUE");
+    System.out.println("ISADMIN = TRUE");
+    System.out.println("ISADMIN = TRUE");
+    System.out.println("ISADMIN = TRUE");
 
     String compactJws = Jwts.builder()
     .claim("username", username)
     .claim("warning-time", warn)
+    .claim("is-admin", isAdmin)
     .setExpiration(exp)
     .signWith(signatureAlgorithm, signingKey)
     .compact();

@@ -157,6 +157,15 @@ create table transactions (
     ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
+Create table timestamps(
+  timestamp_id serial primary key,
+  employee_id bigint unsigned not null,
+  time timestamp not null default current_timestamp,
+  punch_type enum('clock_in', 'clock_out') not null,
+  foreign key (employee_id) REFERENCES employee (employee_id)
+    ON UPDATE CASCADE ON DELETE RESTRICT
+);
+
 insert into customer (first_name, last_name, date_of_birth, email, gender, username, c_password, security_question, security_answer) 
 values
 ('aaron', 'goodfellow', '1996-12-06', 'amgoodfellow@oakland.edu', 'male', 'amgoodfellow', 'je suis me', 'favorite color?', 'green');
@@ -168,3 +177,9 @@ insert into has_account (customer_id, account_id) values (1, 4);
 insert into transactions (account_id, customer_id, old_balance, delta) values (1, 1, 0, 500);
 insert into transactions (account_id, customer_id, old_balance, delta) values (4, 1, 0, 1500);
 insert into transactions (credit_id, customer_id, old_balance, delta) values (2, 1, 0, 2000);
+
+insert into employee
+(first_name, last_name, date_of_birth, street, city, state, zipcode, phone, title, salary, office_location, hire_date) values
+('KaJuan', 'Johnson', '1994-08-24', '2222 Auburn Rd.', 'Auburn Hills', 'MI', '48439', '810-965-1453', 'Developer', 400000, '231 Dodge Hall', now()),
+('Doris', 'Gjata', '1998-03-14', '2222 Russell Rd.', 'Auburn Hills', 'MI', '48326', '810-465-1453', 'UI/UX', 300000, '231 Dodge Hall', now()),
+('Corey', 'Rowe', '1996-11-19', '2222 Fenton Rd.', 'Grand Blanc', 'MI', '48439', '810-238-0219', 'ADA Expert', 900000, '231 Dodge Hall', now());

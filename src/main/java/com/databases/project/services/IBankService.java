@@ -28,4 +28,13 @@ public interface IBankService{
   public String addTransaction(String username, String type, int id, double amount);
 
   public List<Transaction> getTransactionHistory(String username, String type, int id);
+
+  public Map<Integer, String> getEmployees();
+
+  public String punch(String type, int id);
+
+  public Employee getEmployeeInfo(int id);
+
+  public List<Timesheet> getPunchInfo(int id);
+
 }

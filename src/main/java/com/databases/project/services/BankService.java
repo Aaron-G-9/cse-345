@@ -11,6 +11,7 @@ import com.databases.project.models.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.sql.ResultSet;
 import java.sql.Timestamp;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -256,5 +257,61 @@ public class BankService implements IBankService {
 
 
     return transactions;
+  }
+
+  public String punch(String username, String type){
+
+
+    return("Successful punch!");
+  }
+
+
+  public Map<Integer, String> getEmployees(){
+    return jdbcTemplate.query("select employee_id, concat(first_name, ' ', last_name) as name from employee", 
+    (ResultSet rs) -> {
+      HashMap<Integer, String> results = new HashMap<>();
+      while (rs.next()) {
+          results.put(rs.getInt("employee_id"), (rs.getString("name")));
+      }
+      return results;
+    });
+  }
+
+  public String punch(String type, int id){
+    if (!(type.equals("clock-in") || type.equals("clock-out"))){
+      return "Incorrect type";
+    }
+
+    String sql = "insert into timestamps (employee_id, punch_type) VALUES (?, ?)";
+    jdbcTemplate.update(sql, new Object[] {id, type} );
+
+    return "Your punch has been submitted";
+
+  }
+
+  public Employee getEmployeeInfo(int id){
+    String sql = "select * from employee where employee_id = ?";
+    RowMapper<Employee> rowMapper;
+    rowMapper = (rs, rowNum) -> {
+    return new Employee(rs.getString("first_name"), rs.getString("last_name"), rs.getDate("date_of_birth"),
+                        rs.getString("street"), rs.getString("city"), rs.getString("state"), rs.getString("zipcode"),
+                        rs.getString("phone"), rs.getString("title"), rs.getDouble("salary"), 
+                        rs.getString("office_location"), rs.getDate("hire_date"));
+    };
+    List<Employee> employees = jdbcTemplate.query(sql, rowMapper, id);
+
+    return employees.get(0);
+
+  }
+
+  public List<Timesheet> getPunchInfo(int id){
+    String sql = "select * from timestamps where employee_id = ? order by time desc limit 20";
+    RowMapper<Timesheet> rowMapper;
+    rowMapper = (rs, rowNum) -> {
+    return new Timesheet(rs.getTimestamp("time"), rs.getString("punch_type"));
+    };
+    List<Timesheet> timesheet = jdbcTemplate.query(sql, rowMapper, id);
+
+    return timesheet;
   }
 }
