@@ -4,6 +4,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.jdbc.core.RowMapper;
 
 import com.databases.project.models.*;
@@ -479,8 +480,45 @@ public class BankService implements IBankService {
 
     }
 
-
-
     return "Success";
+  }
+
+  @Scheduled(cron = "0 15 4 15 * ?")
+  public void updateInterest(){
+    class Helper{
+      int one;
+      int two;
+      Helper(){}
+      Helper(int one, int two){
+        this.one = one; 
+        this.two = two;
+      }
+
+    }
+    RowMapper<Helper> rowMapper;
+    rowMapper = (rs, rowNum) -> {
+      return new Helper(rs.getInt("customer_id"), rs.getInt("account_id")); 
+    };
+
+    List<Helper> helpers = jdbcTemplate.query("select customer_id, account_id from has_account", rowMapper);
+
+    for (Helper helper : helpers){
+      RowMapper<Account> accountMapper;
+      accountMapper = (rs, rowNum) -> {
+        return new Account(rs.getInt("account_id"), rs.getString("account_name"),  AccountType.valueOf(rs.getString("account_type")), 
+          rs.getDouble("early_withdraw_fee"), rs.getDouble("max_withdraw"), rs.getInt("min_age"), rs.getInt("max_age"), 
+          rs.getDouble("interest"), rs.getLong("processing_delay"), rs.getDouble("minimum_balance"), 
+          rs.getDouble("minimum_deposit"));
+      };
+      List<Account> accounts = jdbcTemplate.query("select * from accounts where account_id = ?", accountMapper, helper.two);
+      Account account = accounts.get(0);
+      
+      double interest = account.getInterest();
+      double balance = jdbcTemplate.queryForObject("select new_balance from transactions where account_id = ? and customer_id = ? order by transaction_time desc limit 1 ", 
+        new Object[] {helper.two, helper.one}, Double.class);
+      double delta = interest * balance;
+
+      jdbcTemplate.update("insert into transactions (account_id, customer_id, old_balance, delta) values(?, ?, ?, ?", new Object[] {helper.two, helper.one, balance, delta});
+    }
   }
 }
