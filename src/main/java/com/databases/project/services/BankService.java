@@ -10,9 +10,14 @@ import com.databases.project.models.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.sql.Date;
 import java.util.Map;
 import java.sql.ResultSet;
 import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.math.BigDecimal;
@@ -313,5 +318,122 @@ public class BankService implements IBankService {
     List<Timesheet> timesheet = jdbcTemplate.query(sql, rowMapper, id);
 
     return timesheet;
+  }
+
+  public List<String> addAccountOptions(){
+    String sql = "select account_name from accounts union select concat(card_name, ' Card')  from credit_cards union select loan_name from loans";
+    RowMapper<String> rowMapper;
+    rowMapper = (rs, rowNum) -> {
+    return rs.getString("account_name");
+    };
+    return jdbcTemplate.query(sql, rowMapper);
+  }
+
+
+
+  private boolean goodEnoughCredit(String user, String needed){
+    int userScore, neededScore;
+    if (user.equals("excellent")){
+      userScore = 3;
+    }else if(user.equals("good")){
+      userScore = 2;
+    }else{
+      userScore = 1;
+    }
+
+    if (needed.equals("excellent")){
+      neededScore = 3;
+    }else if(needed.equals("good")){
+      neededScore = 2;
+    }else{
+      neededScore = 1;
+    }
+
+    if (userScore >= neededScore){
+      return true;
+    }
+
+    return false;
+  }
+
+
+
+  public String addAccount(String username, String name){
+    String sql;
+
+    int customerId = getCustomerID(username);
+
+    RowMapper<Customer> customerMapper = (rs, rowNum) -> {
+      return new Customer(rs.getString("first_name"), rs.getString("last_name"), rs.getDate("date_of_birth"), rs.getString("street"),
+                          rs.getString("city"), rs.getString("state"), rs.getString("country"), rs.getString("email"), rs.getString("gender"), rs.getString("phone"),
+                          rs.getString("credit_status"), rs.getString("username"), rs.getString("c_password"), rs.getString("security_question"),
+                          rs.getString("security_answer"), rs.getDouble("annual_income"), rs.getString("zipcode"));
+    };
+
+    List<Customer> customers = jdbcTemplate.query("select * from customer where username=?", customerMapper, username);
+    Customer customer = customers.get(0);
+
+    if (name.contains("Card")){
+      sql = "select * from credit_cards where card_name = ?";
+      RowMapper<CreditCard> rowMapper;
+      rowMapper = (rs, rowNum) -> {
+        return new CreditCard(rs.getInt("card_id"), rs.getString("card_name"), rs.getDouble("annual_fees"), 
+          rs.getDouble("intro_apr"), rs.getInt("months_of_intro_apr"), rs.getDouble("regular_apr_min"), 
+          rs.getDouble("regular_apr_max"), rs.getDouble("reward_rate_min"), rs.getDouble("reward_rate_max"), 
+          rs.getDouble("reward_bonus"), rs.getDouble("late_fee"), CreditHistory.valueOf(rs.getString("credit_history")));
+      };
+      List<CreditCard> cards = jdbcTemplate.query("select * from credit_cards where card_name = ?", rowMapper, name);
+      CreditCard card = cards.get(0);
+      if (!goodEnoughCredit(customer.getCreditHistory(), card.getCreditHistory().toString())){
+        return "You do not have sufficient credit";
+      }
+
+      jdbcTemplate.update("insert into has_credit_card (customer_id, card_id) values (?, ?)", customerId, card.getId());
+      jdbcTemplate.update(
+        "insert into transactions (credit_id, customer_id, old_balance, delta) values (?, ?, 0, 2000)",
+         card.getId(), customerId 
+      );
+
+      return "Success!";
+
+    }else if (name.contains("Loan")){
+      sql = "select * from loans where loan_name = ?";
+    }else{
+      sql= "select * from accounts where account_name = ?";
+      RowMapper<Account> rowMapper;
+      rowMapper = (rs, rowNum) -> {
+        return new Account(rs.getInt("account_id"), rs.getString("account_name"),  AccountType.valueOf(rs.getString("account_type")), 
+          rs.getDouble("early_withdraw_fee"), rs.getDouble("max_withdraw"), rs.getInt("min_age"), rs.getInt("max_age"), 
+          rs.getDouble("interest"), rs.getLong("processing_delay"), rs.getDouble("minimum_balance"), 
+          rs.getDouble("minimum_deposit"));
+      };
+      List<Account> accounts = jdbcTemplate.query("select * from accounts where account_name = ?", rowMapper, name);
+      Account account = accounts.get(0);
+
+      java.sql.Date dob = customer.getDateOfBirth();
+      LocalDate dateOfBirth = dob.toLocalDate();
+      Period period = Period.between(dateOfBirth, LocalDate.now());
+      
+      if (period.getYears() < account.getMinAge()){
+        return "You are too young";
+      }else if (period.getYears() > account.getMaxAge()){
+        return "You are too old";
+      }
+      
+
+      jdbcTemplate.update("insert into has_account (customer_id, account_id) values (?, ?)", customerId, account.getAccountId());
+      jdbcTemplate.update(
+        "insert into transactions (account_id, customer_id, old_balance, delta) values (?, ?, 0, 10)",
+         account.getAccountId(), customerId 
+      );
+
+      return "Success!";
+      
+
+    }
+
+
+
+    return "Success";
   }
 }

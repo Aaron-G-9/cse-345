@@ -37,4 +37,8 @@ public interface IBankService{
 
   public List<Timesheet> getPunchInfo(int id);
 
+  public List<String> addAccountOptions();
+
+  public String addAccount(String username, String name);
+
 }

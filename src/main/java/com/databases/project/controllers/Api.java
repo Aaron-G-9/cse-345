@@ -221,5 +221,21 @@ public class Api {
     return bankservice.getPunchInfo(id);
   }
 
+  @RequestMapping("/addAccountOptions")
+  public List<String> addAccountOptions(){
+    return bankservice.addAccountOptions();
+  }
+
+  @RequestMapping("/addAccount")
+  public String addAccount(
+      @RequestParam(value = "name", required = true) String name,
+      HttpServletRequest request){
+    String jwt = request.getHeader("Authorization");
+
+    Claims claims = Jwts.parser()         
+      .setSigningKey(DatatypeConverter.parseBase64Binary("regal"))
+      .parseClaimsJws(jwt).getBody();
+    return bankservice.addAccount(claims.get("username").toString(), name);
+  }
 
 }

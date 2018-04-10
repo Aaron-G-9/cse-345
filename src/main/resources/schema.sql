@@ -8,9 +8,9 @@ create table customer (
   state varchar(30) ,
   country varchar(100) ,
   email text not null,
-  gender enum('male', 'female', 'non-binary', 'blank'),
+  gender text not null,
   phone varchar(30),
-  credit_status enum('excellent', 'good', 'bad') ,
+  credit_status text not null ,
   username varchar(100),
   c_password text,
   security_question text,
@@ -128,12 +128,12 @@ create table has_account(
 insert into accounts 
 (account_name, account_type, early_withdraw_fee, max_withdraw, min_age, max_age, interest, processing_delay, minimum_balance, minimum_deposit) 
 VALUES
-('Regal Basic Checking', 'basic_checking', 0, 1000, 18, null, .008, 0, 20, null),
+('Regal Basic Checking', 'basic_checking', 0, 1000, 18, 300, .008, 0, 20, null),
 ('Regal Student Checking', 'student_checking', 0, 500, 18, 30, .005, 0, 5, null),
-('Regal Senior Checking', 'senior_checking', 0, 1500, 62, null, .02, 0, 15, null),
-('Regal Simple Saving', 'saving', 200, 1500, null, null, .04, 172800000, 200, null),
-('Regal Money Market', 'money_market', 500, 1500, null, null, .08, 172800000, 1500, null),
-('Regal IRA', 'ira', null, null, null, null, .10, null, 1500, 100);
+('Regal Senior Checking', 'senior_checking', 0, 1500, 62, 300, .02, 0, 15, null),
+('Regal Simple Saving', 'saving', 200, 1500, 0, 300, .04, 172800000, 200, null),
+('Regal Money Market', 'money_market', 500, 1500, 0, 300, .08, 172800000, 1500, null),
+('Regal IRA', 'ira', null, null, 0, 300, .10, null, 1500, 100);
 
 create table transactions (
   transaction_id serial primary key,
@@ -161,14 +161,14 @@ Create table timestamps(
   timestamp_id serial primary key,
   employee_id bigint unsigned not null,
   time timestamp not null default current_timestamp,
-  punch_type enum('clock_in', 'clock_out') not null,
+  punch_type varchar(100) not null,
   foreign key (employee_id) REFERENCES employee (employee_id)
     ON UPDATE CASCADE ON DELETE RESTRICT
 );
 
-insert into customer (first_name, last_name, date_of_birth, email, gender, username, c_password, security_question, security_answer) 
+insert into customer (first_name, last_name, date_of_birth, email, gender, username, c_password, security_question, security_answer, credit_status) 
 values
-('aaron', 'goodfellow', '1996-12-06', 'amgoodfellow@oakland.edu', 'male', 'amgoodfellow', 'je suis me', 'favorite color?', 'green');
+('aaron', 'goodfellow', '1996-12-06', 'amgoodfellow@oakland.edu', 'male', 'amgoodfellow', 'je suis me', 'favorite color?', 'green', 'good');
 
 insert into has_credit_card (customer_id, card_id) values (1, 2);
 insert into has_account (customer_id, account_id) values (1, 1);

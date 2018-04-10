@@ -77,11 +77,6 @@ public class Authentication implements IAuthentication {
       isAdmin = true;
     }
 
-    System.out.println("ISADMIN = TRUE");
-    System.out.println("ISADMIN = TRUE");
-    System.out.println("ISADMIN = TRUE");
-    System.out.println("ISADMIN = TRUE");
-
     String compactJws = Jwts.builder()
     .claim("username", username)
     .claim("warning-time", warn)
@@ -97,12 +92,22 @@ public class Authentication implements IAuthentication {
     try{
       jdbcTemplate.update(
         "INSERT INTO customer (first_name, last_name, date_of_birth, street, city, state, country, " +
-          "email, phone, username, c_password, security_question, security_answer, " +
-          "annual_income, zipcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+          "email, gender, phone, credit_status, username, c_password, security_question, security_answer, " +
+          "annual_income, zipcode) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         customer.getFirstName(), customer.getLastName(), customer.getDateOfBirth(), customer.getStreetAddress(),
         customer.getCity(), customer.getState(), customer.getCountry(), customer.getEmail(), 
-        customer.getPhone(), customer.getUsername(), customer.getPassword(), 
+        customer.getGender(), customer.getPhone(), customer.getCreditHistory(), customer.getUsername(), customer.getPassword(), 
         customer.getSecurityQuestion(), customer.getSecurityAnswer(), customer.getAnnualIncome(), customer.getZipcode()
+      );
+
+      int customerId = jdbcTemplate.queryForObject(
+          "select customer_id from customer where username = ?",
+          new Object[] {customer.getUsername()}, Integer.class);
+
+      jdbcTemplate.update("insert into has_account (customer_id, account_id) values (?, ?)", customerId, 1);
+      jdbcTemplate.update(
+        "insert into transactions (account_id, customer_id, old_balance, delta) values (1, ?, 0, 5)",
+        customerId
       );
       return true;
     }catch(Error e){

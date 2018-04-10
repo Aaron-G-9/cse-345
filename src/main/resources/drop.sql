@@ -1,4 +1,5 @@
 drop table transactions;
+drop table timestamps;
 drop table has_credit_card;
 drop table has_account;
 drop table has_loan;
