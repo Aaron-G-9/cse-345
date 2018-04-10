@@ -23,8 +23,8 @@
 4. Clone or download project.
 
    * From moodle submission
-   * [Github](https://github.com/Aaron-G-9/cse-345)
-   * [Github](https://github.com/Aaron-G-9/regal-bank-frontend)
+   * [Github - backend](https://github.com/Aaron-G-9/cse-345)
+   * [Github - frontend](https://github.com/Aaron-G-9/regal-bank-frontend)
 
 
 ## Run project
