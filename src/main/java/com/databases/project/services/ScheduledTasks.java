@@ -16,5 +16,17 @@ class ScheduledTasks {
   @Scheduled(fixedRate = 2628000)
   public static void updateInterest(){
     //Update interest
+    int a, b = 2, c = 3, d = 3, e, f = 3, g, h, i = 0, j, k, l, m, n, o, p, q, r, s, t, u, v;
+    
+    //For b, c, d, f in-memory
+ 
+    q = a + b;
+    r = c + d;
+    s = e + f;
+    t = s + g;
+    u = h + i;
+    … = … ;
+
+
   }
 }

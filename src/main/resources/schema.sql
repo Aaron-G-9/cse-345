@@ -188,5 +188,5 @@ insert into transactions (credit_id, customer_id, old_balance, delta) values (2,
 insert into employee
 (first_name, last_name, date_of_birth, street, city, state, zipcode, phone, title, salary, office_location, hire_date) values
 ('KaJuan', 'Johnson', '1994-08-24', '2222 Auburn Rd.', 'Auburn Hills', 'MI', '48439', '810-965-1453', 'Developer', 400000, '231 Dodge Hall', now()),
-('Doris', 'Gjata', '1998-03-14', '2222 Russell Rd.', 'Auburn Hills', 'MI', '48326', '810-465-1453', 'UI/UX', 300000, '231 Dodge Hall', now()),
+('Doris', 'Gjata', '1998-03-14', '2222 Russell Rd.', 'Auburn Hills', 'MI', '48326', '810-465-1453', 'UI/UX', 3000000, '231 Dodge Hall', now()),
 ('Corey', 'Rowe', '1996-11-19', '2222 Fenton Rd.', 'Grand Blanc', 'MI', '48439', '810-238-0219', 'ADA Expert', 900000, '231 Dodge Hall', now());
